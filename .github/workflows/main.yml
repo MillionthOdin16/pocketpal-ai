@@ -6,7 +6,7 @@ on:
 jobs:
   build_android:
     runs-on: ubuntu-latest
-    
+
     steps:
       # Step 1: Checkout the code
       - name: Checkout code
@@ -38,6 +38,7 @@ jobs:
         with:
           ruby-version: '3.2.3'  # Specify a Ruby version
           bundler-cache: true
+
       # Step 6: Create .env file
       - name: Create .env file
         run: |
@@ -47,7 +48,7 @@ jobs:
       - name: Build Android app
         working-directory: android
         run: |
-          bundle exec fastlane build_android_apk
+          bundle exec fastlane release_android_alpha
 
       # Step 8: Upload APK as artifact
       - name: Upload APK artifact
