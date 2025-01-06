@@ -22,53 +22,56 @@ import {useSafeAreaFrame} from 'react-native-safe-area-context';
 export const useKeyboardDimensions = (useListenersOnAndroid?: boolean) => {
   const {height, y} = useSafeAreaFrame();
   const [state, setState] = React.useState({
-    keyboardEndPositionY: height,
-    keyboardHeight: 0,
+      keyboardHeight: 0,
+    keyboardVisible: false,
   });
 
   React.useEffect(() => {
     const handleDimensionsChange = ({window}: {window: ScaledSize}) =>
-      setState(current => ({
-        ...current,
-        keyboardEndPositionY: window.height,
-      }));
-
-    const resetKeyboardDimensions = () =>
-      setState({
-        keyboardEndPositionY: height,
-        keyboardHeight: 0,
-      });
-
-    const updateKeyboardDimensions = (event: KeyboardEvent) =>
       setState(current => {
-        const {screenY: keyboardEndPositionY} = event.endCoordinates;
-        const keyboardHeight = height - keyboardEndPositionY + y;
-
-        if (keyboardHeight === current.keyboardHeight) {
-          return current;
-        }
-
-        const {duration, easing} = event;
-
-        if (duration && easing) {
-          // We have to pass the duration equal to minimal
-          // accepted duration defined here: RCTLayoutAnimation.m
-          const animationDuration = Math.max(duration, 10);
-
-          LayoutAnimation.configureNext({
-            duration: animationDuration,
-            update: {
-              duration: animationDuration,
-              type: LayoutAnimation.Types[easing],
-            },
-          });
-        }
-
-        return {
-          keyboardEndPositionY,
-          keyboardHeight,
+          console.log('Dimensions Change Event', window.height, height, y);
+          return {
+          ...current,
         };
+        });
+
+    const resetKeyboardDimensions = () => {
+        console.log('keyboardDidHide');
+        setState({
+        keyboardHeight: 0,
+            keyboardVisible: false,
       });
+    };
+
+    const updateKeyboardDimensions = (event: KeyboardEvent) => {
+        console.log('keyboardDidShow', event.endCoordinates.height);
+      const keyboardHeight = event.endCoordinates.height;
+
+      if (keyboardHeight === state.keyboardHeight) {
+        return;
+      }
+
+      const {duration, easing} = event;
+
+      if (duration && easing) {
+        // We have to pass the duration equal to minimal
+        // accepted duration defined here: RCTLayoutAnimation.m
+        const animationDuration = Math.max(duration, 10);
+
+        LayoutAnimation.configureNext({
+          duration: animationDuration,
+          update: {
+            duration: animationDuration,
+            type: LayoutAnimation.Types[easing],
+          },
+        });
+      }
+
+      setState({
+          keyboardHeight,
+          keyboardVisible: true,
+        });
+    };
 
     const dimensionsListener = Dimensions.addEventListener(
       'change',
@@ -95,7 +98,7 @@ export const useKeyboardDimensions = (useListenersOnAndroid?: boolean) => {
       keyboardListeners.forEach(listener => listener.remove());
       dimensionsListener.remove();
     };
-  }, [height, useListenersOnAndroid, y]);
+  }, [height, useListenersOnAndroid, y, state.keyboardHeight]);
 
   return state;
 };
