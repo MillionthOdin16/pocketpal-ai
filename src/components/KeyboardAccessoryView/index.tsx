@@ -6,6 +6,8 @@ import {
   StyleSheet,
   View,
   ViewStyle,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -42,36 +44,38 @@ export const KeyboardAccessoryView = React.memo(
     useListenersOnAndroid,
   }: Props) => {
     const {onLayout, size} = useComponentSize();
-    const {keyboardEndPositionY, keyboardHeight} = useKeyboardDimensions(
+    const {keyboardHeight, keyboardVisible} = useKeyboardDimensions(
       useListenersOnAndroid,
     );
     const {panHandlers, positionY} = usePanResponder();
     const {bottom, left, right} = useSafeAreaInsets();
 
-    const deltaY = Animated.subtract(
-      positionY,
-      keyboardEndPositionY,
-    ).interpolate({
-      inputRange: [0, Number.MAX_SAFE_INTEGER],
-      outputRange: [0, Number.MAX_SAFE_INTEGER],
-      extrapolate: 'clamp',
-    });
+    // Calculate translateY for the accessory view, ensures that the accessory view is positioned right above the keyboard
+      const translateY = React.useMemo(() => {
+        if (!keyboardVisible) return 0;
+          const offset = keyboardHeight + (spaceBetweenKeyboardAndAccessoryView ?? 0);
+          return -offset;
+       }, [keyboardHeight, keyboardVisible, spaceBetweenKeyboardAndAccessoryView])
+
 
     const offset =
       size.height +
-      keyboardHeight +
       (keyboardHeight > 0
         ? (contentOffsetKeyboardOpened ?? 0) - bottom
         : contentOffsetKeyboardClosed ?? 0);
 
     return (
-      <>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : undefined}
+      >
         <Animated.View
           style={[
             // eslint-disable-next-line react-native/no-inline-styles
             {
               flex: 1,
-              paddingBottom: Animated.subtract(offset, deltaY),
+              paddingBottom: offset, // Remove delta Y
             },
             scrollableContainerStyle,
           ]}>
@@ -80,12 +84,7 @@ export const KeyboardAccessoryView = React.memo(
         <Animated.View
           style={[
             {
-              bottom: Animated.subtract(
-                keyboardHeight > 0
-                  ? keyboardHeight + (spaceBetweenKeyboardAndAccessoryView ?? 0)
-                  : 0,
-                deltaY,
-              ),
+              transform: [{ translateY }],
             },
             styles.container,
             style,
@@ -107,7 +106,7 @@ export const KeyboardAccessoryView = React.memo(
             {children}
           </View>
         </Animated.View>
-      </>
+      </KeyboardAvoidingView>
     );
   },
 );
