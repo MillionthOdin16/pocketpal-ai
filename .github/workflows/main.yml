@@ -12,7 +12,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Important for git history
+          fetch-depth: 0
 
       # Step 2: Set up JDK 17
       - name: Set up JDK 17
@@ -28,29 +28,47 @@ jobs:
           node-version: '20.18.0'
           cache: 'yarn'
 
-      # Step 4: Install dependencies using Yarn
+      # Step 4: Cache Yarn Dependencies
+      - name: Cache Yarn dependencies
+        id: yarn-cache
+        uses: actions/cache@v3
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+
+      # Step 5: Install dependencies using Yarn
       - name: Install dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn install
 
-      # Step 5: Set up Ruby and Bundler
+      # Step 6: Set up Ruby and Bundler
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2.3'  # Specify a Ruby version
+          ruby-version: '3.2.3'
           bundler-cache: true
 
-      # Step 6: Create .env file
+      # Step 7: Cache Gradle Dependencies
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/build.gradle') }}
+
+      # Step 8: Create .env file
       - name: Create .env file
         run: |
           echo "FIREBASE_FUNCTIONS_URL=${{ vars.FIREBASE_FUNCTIONS_URL }}" > .env
 
-      # Step 7: Build Android app
+      # Step 9: Build Android app
       - name: Build Android app
         working-directory: android
         run: |
-          bundle exec fastlane release_android_alpha
+          bundle exec fastlane release_android_alpha --parallel
 
-      # Step 8: Upload APK as artifact
+      # Step 10: Upload APK as artifact
       - name: Upload APK artifact
         uses: actions/upload-artifact@v3
         with:
