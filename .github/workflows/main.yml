@@ -62,15 +62,14 @@ jobs:
         run: |
           echo "FIREBASE_FUNCTIONS_URL=${{ vars.FIREBASE_FUNCTIONS_URL }}" > .env
 
-       # Step 9: Build Android app (Directly with Gradle)
+      # Step 9: Build Android app (Assemble Debug)
       - name: Build Android app
         working-directory: android
-        run: ./gradlew assembleRelease
-
+        run: ./gradlew assembleDebug
 
       # Step 10: Upload APK as artifact
       - name: Upload APK artifact
         uses: actions/upload-artifact@v3
         with:
-          name: android-app-release.apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: android-app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
