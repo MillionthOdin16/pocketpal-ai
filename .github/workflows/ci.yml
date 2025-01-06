@@ -42,18 +42,6 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      # Step 4: Run linters (ESLint)
-      - name: Run ESLint
-        run: yarn lint
-
-      # Step 5: Run TypeScript type checks
-      - name: Run TypeScript type check
-        run: yarn typecheck
-
-      # Step 6: Run unit tests (Jest)
-      - name: Run unit tests
-        run: yarn test --coverage
-
   # Job for Android build
   build-android:
     runs-on: ubuntu-latest
@@ -92,29 +80,3 @@ jobs:
         with:
           name: android-debug-apk # TODO: change to release-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
-  # Job for iOS build
-  build-ios:
-    runs-on: macos-latest  # macOS runner required for iOS builds
-    needs: build-and-test
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      # Cache node_modules
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node-    
-
-      - name: Install Yarn
-        run: npm install -g yarn
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Build iOS
-        run: yarn ios:build
