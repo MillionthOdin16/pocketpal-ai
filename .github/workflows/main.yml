@@ -62,11 +62,11 @@ jobs:
         run: |
           echo "FIREBASE_FUNCTIONS_URL=${{ vars.FIREBASE_FUNCTIONS_URL }}" > .env
 
-      # Step 9: Build Android app
+       # Step 9: Build Android app (Directly with Gradle)
       - name: Build Android app
         working-directory: android
-        run: |
-          bundle exec fastlane android assembleRelease
+        run: ./gradlew assembleRelease
+
 
       # Step 10: Upload APK as artifact
       - name: Upload APK artifact
